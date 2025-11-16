@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timetoose Weight</title>
+<style>
+body {margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#f0f8ff;color:#000;}
+header {background:#00bfff;padding:20px;text-align:center;font-size:28px;font-weight:bold;color:#fff;border-bottom-left-radius:15px;border-bottom-right-radius:15px;}
+.card {background:#fff;padding:25px;margin:20px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+input,textarea {width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #00bfff;box-sizing:border-box;}
+button {padding:12px;margin:10px 0;background:#00bfff;border:none;color:#fff;font-weight:bold;font-size:16px;border-radius:12px;cursor:pointer;transition:0.3s;}
+button:hover{background:#009acd;}
+#telaEmail,#telaPagamento,#telaCodigo,#areaPremium,#conteudo,#adminPanel{display:none;}
+.menu button{width:90%;margin:auto;display:block;}
+h2,h3,h4{margin-top:0;color:#00bfff;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #00bfff;padding:8px;text-align:left;}
+th{background:#e6f2ff;}
+</style>
+</head>
+<body>
+<header>Timetoose Weight</header>
+
+<!-- Tela Email -->
+<section id="telaEmail" class="card">
+<h2>Bem-vindo!</h2>
+<input type="email" id="emailInput" placeholder="Seu e-mail">
+<button onclick="entrarEmail()">Continuar</button>
+</section>
+
+<!-- Tela Pagamento -->
+<section id="telaPagamento" class="card">
+<h2>Pagamento Pix</h2>
+<p>Chave Pix: <b>f770643e-6200-4cfb-92cf-5a0c61f1898b</b></p>
+<p>Nome do recebedor: <b>Joel Freitas dos Santos</b></p>
+<p>Valor: <b>R$ 5,90</b></p>
+<input type="file" id="comprovanteFile">
+<button onclick="enviarComprovante()">Enviar Comprovante</button>
+</section>
+
+<!-- Tela Código -->
+<section id="telaCodigo" class="card">
+<h2>Digite seu código</h2>
+<input type="text" id="codigoInput" placeholder="Código de liberação">
+<button onclick="validarAcesso()">Liberar Acesso</button>
+</section>
+
+<!-- Área Premium -->
+<section id="areaPremium" class="card">
+<h2>Área Premium</h2>
+<div class="menu">
+<button onclick="abrir('rotina')">⏳ Rotina diária</button>
+<button onclick="abrir('skincare')">💆 Skincare</button>
+<button onclick="abrir('alimentos')">🥗 Alimentação</button>
+<button onclick="abrir('chat')">🤖 Chat IA</button>
+<button onclick="abrir('blog')">📝 Blog/Rotinas</button>
+<button onclick="abrir('adminPanel')">⚙️ Admin</button>
+</div>
+<div id="conteudo"></div>
+<div id="adminPanel"></div>
+</section>
+
+<script>
+// Dados simulados
+let usuarios = JSON.parse(localStorage.getItem('usuarios'))||[];
+let codigos = JSON.parse(localStorage.getItem('codigos'))||[];
+let posts = JSON.parse(localStorage.getItem('posts'))||[];
+
+document.getElementById("telaEmail").style.display="block";
+
+// Tela Email
+function entrarEmail(){
+  let email = document.getElementById('emailInput').value.trim();
+  if(!email){alert("Digite seu e-mail!"); return;}
+  let user = usuarios.find(u=>u.email===email);
+  localStorage.setItem('ultimoEmail',email);
+  if(!user){
+      document.getElementById("telaEmail").style.display="none";
+      document.getElementById("telaPagamento").style.display="block";
+  } else if(user.status==="Aprovado"){
+      document.getElementById("telaEmail").style.display="none";
+      document.getElementById("areaPremium").style.display="block";
+  } else {
+      document.getElementById("telaEmail").style.display="none";
+      document.getElementById("telaCodigo").style.display="block";
+  }
+}
+
+// Upload Comprovante
+function enviarComprovante(){
+  const file = document.getElementById('comprovanteFile').files[0];
+  if(!file){alert("Selecione um arquivo!"); return;}
+  let email = localStorage.getItem('ultimoEmail');
+  usuarios.push({email:email,comprovante:file.name,status:"Pendente"});
+  localStorage.setItem('usuarios',JSON.stringify(usuarios));
+  alert("Comprovante enviado! Aguarde código do admin.");
+  document.getElementById("telaPagamento").style.display="none";
+  document.getElementById("telaCodigo").style.display="block";
+}
+
+// Validar Código
+function validarAcesso(){
+  let codigo = document.getElementById('codigoInput').value.trim();
+  let userCodigo = codigos.find(c=>c.codigo===codigo && !c.usado);
+  if(userCodigo){
+      userCodigo.usado=true;
+      codigos=codigos.map(c=>c.codigo===codigo?userCodigo:c);
+      localStorage.setItem('codigos',JSON.stringify(codigos));
+      let user = usuarios.find(u=>u.email===userCodigo.email);
+      if(user) user.status="Aprovado";
+      localStorage.setItem('usuarios',JSON.stringify(usuarios));
+      document.getElementById("telaCodigo").style.display="none";
+      document.getElementById("areaPremium").style.display="block";
+      alert("Acesso liberado! Aproveite a plataforma.");
+  }else{alert("Código inválido ou já usado!");}
+}
+
+// Área Premium
+function abrir(tipo){
+  let box = document.getElementById("conteudo");
+  box.style.display="block";
+  box.innerHTML="";
+  document.getElementById("adminPanel").style.display="none";
+
+  if(tipo==='rotina') box.innerHTML="<h3>Rotina Sugerida 🕒</h3><p>06:30 — Acordar + 300ml água<br>07:00 — Café da manhã<br>12:00 — Almoço leve<br>16:00 — Lanche saudável<br>19:30 — Jantar leve<br>22:30 — Dormir</p>";
+  if(tipo==='skincare') box.innerHTML="<h3>Skincare ✨</h3><p>Manhã: Gel de limpeza, vitamina C, hidratante, protetor solar.<br>Noite: Limpeza, ácido adequado, hidratante profundo.</p>";
+  if(tipo==='alimentos') box.innerHTML="<h3>Alimentos recomendados 🥗</h3><p>Frango, ovos, aveia, legumes, salada, fibras, água, chás sem açúcar.</p>";
+  if(tipo==='chat'){
+    box.innerHTML="<h3>Chat IA 🤖</h3><input id='pergunta' placeholder='Digite sua pergunta...'><button onclick='responder()'>Enviar</button><p id='resposta'></p>";
+  }
+  if(tipo==='blog'){
+    box.innerHTML="<h3>Blog/Rotinas 📝</h3><button onclick='criarPost()'>➕ Criar Post</button><div id='posts'></div>";
+    atualizarPosts();
+  }
+  if(tipo==='adminPanel'){loginAdmin();}
+}
+
+// Chat IA
+function responder(){
+  let q=document.getElementById('pergunta').value.toLowerCase();
+  let r="Não entendi, tente perguntar de outro jeito 😊";
+  if(q.includes("emagrecer")) r="💪 Reduza açúcar, coma mais fibras e mantenha constância!";
+  if(q.includes("treino")) r="🚀 Treino ideal: caminhada + abdominais + agachamentos";
+  if(q.includes("alimentação")) r="🥗 Prefira alimentos naturais, frutas, legumes e proteínas magras.";
+  if(q.includes("sono")) r="🛌 Dormir 7-8h por noite é essencial.";
+  if(q.includes("skincare")) r="✨ Limpe, hidrate e proteja a pele diariamente.";
+  if(q.includes("motivação")) r="🔥 Mantenha consistência, você consegue!";
+  document.getElementById("resposta").innerText=r;
+}
+
+// Blog
+function criarPost(){
+  let titulo=prompt("Título do post:");
+  let conteudo=prompt("Conteúdo do post:");
+  posts.push({titulo,conteudo});
+  localStorage.setItem('posts',JSON.stringify(posts));
+  atualizarPosts();
+}
+function atualizarPosts(){
+  let postsDiv=document.getElementById('posts');if(!postsDiv) return;
+  postsDiv.innerHTML="";
+  posts.forEach(p=>{postsDiv.innerHTML+=`<h4>${p.titulo}</h4><p>${p.conteudo}</p><hr>`;});
+}
+
+// Admin
+function loginAdmin(){
+  let email=prompt("Login Admin (E-mail):");
+  let senha=prompt("Senha Admin:");
+  if(email==="joelsarahilha@gmail.com" && senha==="sarah"){
+      document.getElementById("adminPanel").style.display="block";
+      let box=document.getElementById("conteudo");
+      box.innerHTML="<h3>Painel Admin ⚙️</h3><div id='adminContent'></div>";
+      atualizarAdmin();
+  } else alert("Credenciais incorretas!");
+}
+
+function atualizarAdmin(){
+  let div=document.getElementById('adminContent');
+  let html="<h4>Usuários Pendentes:</h4><table><tr><th>E-mail</th><th>Comprovante</th><th>Status</th><th>Ações</th></tr>";
+  usuarios.forEach((u,i)=>{
+    html+=`<tr><td>${u.email}</td><td>${u.comprovante||'N/A'}</td><td>${u.status}</td><td>`;
+    if(u.status==="Pendente") html+=`<button onclick='gerarCodigoManual(${i})'>Gerar Código</button>`;
+    html+=`</td></tr>`;
+  });
+  html+="</table>";
+  div.innerHTML=html;
+}
+
+function gerarCodigoManual(i){
+  let codigo=Math.random().toString(36).substring(2,8).toUpperCase();
+  codigos.push({email:usuarios[i].email,codigo:codigo,usado:false});
+  localStorage.setItem('codigos',JSON.stringify(codigos));
+  usuarios[i].status="Aprovado";
+  localStorage.setItem('usuarios',JSON.stringify(usuarios));
+  alert("Código gerado para "+usuarios[i].email+": "+codigo);
+  atualizarAdmin();
+}
+</script>
+</body>
+</html>
